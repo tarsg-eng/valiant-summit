@@ -1,6 +1,3 @@
-const MIN_INTERVAL_MS = 120_000; // 2 min
-const MAX_INTERVAL_MS = 180_000; // 3 min
-
 type TickCallback = (elapsed: number, nextQuoteIn: number) => void;
 type QuoteCallback = () => void;
 type CompleteCallback = () => void;
@@ -11,14 +8,18 @@ class TimerManager {
   private startedAt = 0;
   private totalDuration = 0;
   private nextQuoteAt = 0;
+  private minIntervalMs = 120_000;
+  private maxIntervalMs = 180_000;
 
   onTick: TickCallback = () => {};
   onQuoteFired: QuoteCallback = () => {};
   onComplete: CompleteCallback = () => {};
 
-  start(durationSeconds: number): void {
+  start(durationSeconds: number, minIntervalMs: number, maxIntervalMs: number): void {
     this.stop();
     this.totalDuration = durationSeconds * 1000;
+    this.minIntervalMs = minIntervalMs;
+    this.maxIntervalMs = maxIntervalMs;
     this.startedAt = Date.now();
     this.scheduleNextQuote();
 
@@ -46,8 +47,8 @@ class TimerManager {
 
   private scheduleNextQuote(): void {
     const delay =
-      MIN_INTERVAL_MS +
-      Math.random() * (MAX_INTERVAL_MS - MIN_INTERVAL_MS);
+      this.minIntervalMs +
+      Math.random() * (this.maxIntervalMs - this.minIntervalMs);
     this.nextQuoteAt = Date.now() + delay;
 
     this.quoteTimeout = setTimeout(() => {

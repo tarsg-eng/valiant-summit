@@ -1,8 +1,10 @@
 import React, { useState, useCallback } from 'react';
+import { BUILD_ID } from '../buildId';
 import {
   View,
   Text,
   TouchableOpacity,
+  TextInput,
   StyleSheet,
   Dimensions,
   StatusBar,
@@ -20,6 +22,17 @@ const TEXT = '#ffffff';
 const DIM = '#888888';
 
 const DURATIONS = [15, 20, 25, 30, 45];
+
+type IntervalPreset = { label: string; min: number; max: number };
+const INTERVAL_PRESETS: IntervalPreset[] = [
+  { label: '30s',   min: 30,  max: 30  },
+  { label: '1m',    min: 60,  max: 60  },
+  { label: '2–3m',  min: 120, max: 180 },
+  { label: '5m',    min: 300, max: 300 },
+  { label: 'custom', min: -1, max: -1  },
+];
+const DEFAULT_PRESET = INTERVAL_PRESETS[2]; // 2–3m
+
 const { width } = Dimensions.get('window');
 const RING_SIZE = width * 0.72;
 const STROKE = 12;
@@ -33,14 +46,25 @@ function formatTime(ms: number): string {
   return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 }
 
+function intervalHint(min: number, max: number): string {
+  if (min === max) return `Every ${min}s`;
+  const fmt = (s: number) => s >= 60 ? `${s / 60}m` : `${s}s`;
+  return `Every ${fmt(min)}–${fmt(max)}`;
+}
+
 export default function TimerScreen({ audioReady }: { audioReady: boolean }) {
   const [running, setRunning] = useState(false);
   const [duration, setDuration] = useState(25);
   const [elapsed, setElapsed] = useState(0);
   const [nextQuoteIn, setNextQuoteIn] = useState(0);
   const [flashCount, setFlashCount] = useState(0);
+  const [preset, setPreset] = useState<IntervalPreset>(DEFAULT_PRESET);
+  const [customSecs, setCustomSecs] = useState('45');
 
   useKeepAwake();
+
+  const resolvedMin = preset.min === -1 ? (parseInt(customSecs, 10) || 45) : preset.min;
+  const resolvedMax = preset.max === -1 ? (parseInt(customSecs, 10) || 45) : preset.max;
 
   const handleStart = useCallback(() => {
     if (!audioReady) return;
@@ -59,8 +83,8 @@ export default function TimerScreen({ audioReady }: { audioReady: boolean }) {
       setRunning(false);
       setElapsed(duration * 60 * 1000);
     };
-    TimerManager.start(duration * 60);
-  }, [audioReady, duration]);
+    TimerManager.start(duration * 60, resolvedMin * 1000, resolvedMax * 1000);
+  }, [audioReady, duration, resolvedMin, resolvedMax]);
 
   const handleStop = useCallback(() => {
     TimerManager.stop();
@@ -80,21 +104,56 @@ export default function TimerScreen({ audioReady }: { audioReady: boolean }) {
 
       <Text style={styles.title}>VALIANT SUMMIT</Text>
 
-      {/* Duration picker */}
       {!running && (
-        <View style={styles.durationRow}>
-          {DURATIONS.map((d) => (
-            <TouchableOpacity
-              key={d}
-              style={[styles.chip, duration === d && styles.chipActive]}
-              onPress={() => setDuration(d)}
-            >
-              <Text style={[styles.chipText, duration === d && styles.chipTextActive]}>
-                {d}m
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
+        <>
+          {/* Duration picker */}
+          <View style={styles.pickerRow}>
+            {DURATIONS.map((d) => (
+              <TouchableOpacity
+                key={d}
+                style={[styles.chip, duration === d && styles.chipActive]}
+                onPress={() => setDuration(d)}
+              >
+                <Text style={[styles.chipText, duration === d && styles.chipTextActive]}>
+                  {d}m
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          {/* Interval picker */}
+          <View style={styles.intervalSection}>
+            <Text style={styles.sectionLabel}>QUOTES EVERY</Text>
+            <View style={styles.pickerRow}>
+              {INTERVAL_PRESETS.map((p) => (
+                <TouchableOpacity
+                  key={p.label}
+                  style={[styles.chip, preset.label === p.label && styles.chipActive]}
+                  onPress={() => setPreset(p)}
+                >
+                  <Text style={[styles.chipText, preset.label === p.label && styles.chipTextActive]}>
+                    {p.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+            {preset.min === -1 && (
+              <View style={styles.customRow}>
+                <TextInput
+                  style={styles.customInput}
+                  value={customSecs}
+                  onChangeText={(t) => setCustomSecs(t.replace(/[^0-9]/g, ''))}
+                  keyboardType="number-pad"
+                  maxLength={4}
+                  selectTextOnFocus
+                  placeholderTextColor={DIM}
+                  placeholder="45"
+                />
+                <Text style={styles.customUnit}>seconds</Text>
+              </View>
+            )}
+          </View>
+        </>
       )}
 
       {/* Progress ring */}
@@ -150,7 +209,8 @@ export default function TimerScreen({ audioReady }: { audioReady: boolean }) {
         </Text>
       </TouchableOpacity>
 
-      <Text style={styles.hint}>Quotes fire every 2–3 min over your music</Text>
+      <Text style={styles.hint}>{intervalHint(resolvedMin, resolvedMax)} over your music</Text>
+      <Text style={styles.buildId}>build {BUILD_ID}</Text>
     </View>
   );
 }
@@ -169,12 +229,25 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '900',
     letterSpacing: 6,
-    marginBottom: 28,
+    marginBottom: 20,
   },
-  durationRow: {
+  pickerRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    justifyContent: 'center',
+  },
+  intervalSection: {
+    alignItems: 'center',
     gap: 10,
-    marginBottom: 28,
+    marginTop: 16,
+    marginBottom: 4,
+  },
+  sectionLabel: {
+    color: DIM,
+    fontSize: 10,
+    letterSpacing: 4,
+    fontWeight: '700',
   },
   chip: {
     paddingHorizontal: 14,
@@ -190,17 +263,36 @@ const styles = StyleSheet.create({
   chipText: {
     color: DIM,
     fontWeight: '700',
-    fontSize: 14,
+    fontSize: 13,
   },
   chipTextActive: {
     color: '#000',
+  },
+  customRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  customInput: {
+    color: TEXT,
+    fontSize: 22,
+    fontWeight: '300',
+    borderBottomWidth: 1,
+    borderBottomColor: ORANGE,
+    minWidth: 60,
+    textAlign: 'center',
+    paddingVertical: 2,
+  },
+  customUnit: {
+    color: DIM,
+    fontSize: 13,
   },
   ringWrapper: {
     width: RING_SIZE,
     height: RING_SIZE,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 32,
+    marginVertical: 16,
   },
   ringCenter: {
     position: 'absolute',
@@ -220,7 +312,7 @@ const styles = StyleSheet.create({
   },
   nextRow: {
     alignItems: 'center',
-    marginBottom: 36,
+    marginBottom: 24,
     gap: 4,
   },
   nextLabel: {
@@ -245,7 +337,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 56,
     paddingVertical: 18,
     borderRadius: 50,
-    marginBottom: 20,
+    marginBottom: 16,
   },
   buttonDisabled: {
     backgroundColor: GRAY,
@@ -261,5 +353,11 @@ const styles = StyleSheet.create({
     fontSize: 12,
     textAlign: 'center',
     letterSpacing: 1,
+  },
+  buildId: {
+    color: '#333333',
+    fontSize: 10,
+    marginTop: 8,
+    letterSpacing: 2,
   },
 });
