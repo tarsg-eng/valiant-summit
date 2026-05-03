@@ -23,18 +23,20 @@ const AUDIO_SOURCES = [
   require('../assets/audio/quote_20.mp3'),
 ];
 
+const ACTIVE_MODE = {
+  playsInSilentModeIOS: true,
+  staysActiveInBackground: true,
+  interruptionModeIOS: InterruptionModeIOS.MixWithOthers,
+  interruptionModeAndroid: InterruptionModeAndroid.DoNotMix,
+  shouldDuckAndroid: false,
+};
+
 class AudioPlayer {
   private sounds: Audio.Sound[] = [];
   private initialized = false;
 
   async init(): Promise<void> {
-    await Audio.setAudioModeAsync({
-      playsInSilentModeIOS: true,
-      staysActiveInBackground: true,
-      interruptionModeIOS: InterruptionModeIOS.DuckOthers,
-      interruptionModeAndroid: InterruptionModeAndroid.DuckOthers,
-      shouldDuckAndroid: true,
-    });
+    await Audio.setAudioModeAsync(ACTIVE_MODE);
 
     const loads = AUDIO_SOURCES.map(async (source) => {
       const { sound } = await Audio.Sound.createAsync(source, { shouldPlay: false });
@@ -47,14 +49,17 @@ class AudioPlayer {
   async playByIndex(index: number, onDone?: () => void): Promise<void> {
     if (!this.initialized || index < 0 || index >= this.sounds.length) return;
     const sound = this.sounds[index];
-    if (onDone) {
-      sound.setOnPlaybackStatusUpdate((status) => {
-        if (status.isLoaded && status.didJustFinish) {
-          sound.setOnPlaybackStatusUpdate(null);
-          onDone();
-        }
-      });
-    }
+
+    sound.setOnPlaybackStatusUpdate(async (status) => {
+      if (status.isLoaded && status.didJustFinish) {
+        sound.setOnPlaybackStatusUpdate(null);
+        // Release the audio session so iOS immediately restores other apps' volume
+        await Audio.setAudioModeAsync({ ...ACTIVE_MODE, staysActiveInBackground: false });
+        await Audio.setAudioModeAsync(ACTIVE_MODE);
+        onDone?.();
+      }
+    });
+
     await sound.setPositionAsync(0);
     await sound.playAsync();
   }
