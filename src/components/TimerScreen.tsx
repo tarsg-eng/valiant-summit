@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -33,20 +33,14 @@ function formatTime(ms: number): string {
   return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 }
 
-export default function TimerScreen() {
+export default function TimerScreen({ audioReady }: { audioReady: boolean }) {
   const [running, setRunning] = useState(false);
   const [duration, setDuration] = useState(25);
   const [elapsed, setElapsed] = useState(0);
   const [nextQuoteIn, setNextQuoteIn] = useState(0);
-  const [audioReady, setAudioReady] = useState(false);
   const [flashCount, setFlashCount] = useState(0);
 
   useKeepAwake();
-
-  useEffect(() => {
-    AudioPlayer.init().then(() => setAudioReady(true));
-    return () => { AudioPlayer.unload(); };
-  }, []);
 
   const handleStart = useCallback(() => {
     if (!audioReady) return;

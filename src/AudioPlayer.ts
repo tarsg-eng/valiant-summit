@@ -1,6 +1,27 @@
 import { Audio, InterruptionModeIOS, InterruptionModeAndroid } from 'expo-av';
 
-const QUOTE_COUNT = 20;
+const AUDIO_SOURCES = [
+  require('../assets/audio/quote_01.mp3'),
+  require('../assets/audio/quote_02.mp3'),
+  require('../assets/audio/quote_03.mp3'),
+  require('../assets/audio/quote_04.mp3'),
+  require('../assets/audio/quote_05.mp3'),
+  require('../assets/audio/quote_06.mp3'),
+  require('../assets/audio/quote_07.mp3'),
+  require('../assets/audio/quote_08.mp3'),
+  require('../assets/audio/quote_09.mp3'),
+  require('../assets/audio/quote_10.mp3'),
+  require('../assets/audio/quote_11.mp3'),
+  require('../assets/audio/quote_12.mp3'),
+  require('../assets/audio/quote_13.mp3'),
+  require('../assets/audio/quote_14.mp3'),
+  require('../assets/audio/quote_15.mp3'),
+  require('../assets/audio/quote_16.mp3'),
+  require('../assets/audio/quote_17.mp3'),
+  require('../assets/audio/quote_18.mp3'),
+  require('../assets/audio/quote_19.mp3'),
+  require('../assets/audio/quote_20.mp3'),
+];
 
 class AudioPlayer {
   private sounds: Audio.Sound[] = [];
@@ -15,28 +36,32 @@ class AudioPlayer {
       shouldDuckAndroid: true,
     });
 
-    const loads: Promise<void>[] = [];
-    for (let i = 1; i <= QUOTE_COUNT; i++) {
-      const num = String(i).padStart(2, '0');
-      loads.push(
-        Audio.Sound.createAsync(
-          // eslint-disable-next-line @typescript-eslint/no-require-imports
-          { uri: `asset:/audio/quote_${num}.mp3` },
-          { shouldPlay: false }
-        ).then(({ sound }) => {
-          this.sounds.push(sound);
-        })
-      );
-    }
-    await Promise.all(loads);
+    const loads = AUDIO_SOURCES.map(async (source) => {
+      const { sound } = await Audio.Sound.createAsync(source, { shouldPlay: false });
+      return sound;
+    });
+    this.sounds = await Promise.all(loads);
     this.initialized = true;
+  }
+
+  async playByIndex(index: number, onDone?: () => void): Promise<void> {
+    if (!this.initialized || index < 0 || index >= this.sounds.length) return;
+    const sound = this.sounds[index];
+    if (onDone) {
+      sound.setOnPlaybackStatusUpdate((status) => {
+        if (status.isLoaded && status.didJustFinish) {
+          sound.setOnPlaybackStatusUpdate(null);
+          onDone();
+        }
+      });
+    }
+    await sound.setPositionAsync(0);
+    await sound.playAsync();
   }
 
   async playRandom(): Promise<void> {
     if (!this.initialized || this.sounds.length === 0) return;
-    const sound = this.sounds[Math.floor(Math.random() * this.sounds.length)];
-    await sound.setPositionAsync(0);
-    await sound.playAsync();
+    await this.playByIndex(Math.floor(Math.random() * this.sounds.length));
   }
 
   async unload(): Promise<void> {

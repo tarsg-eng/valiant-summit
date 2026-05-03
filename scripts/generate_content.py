@@ -16,6 +16,7 @@ import requests
 import anthropic
 
 AUDIO_DIR = os.path.join(os.path.dirname(__file__), '..', 'assets', 'audio')
+QUOTES_JSON = os.path.join(os.path.dirname(__file__), '..', 'assets', 'quotes.json')
 
 # ElevenLabs "Adam" — deep, authoritative male voice
 ELEVENLABS_VOICE_ID = 'pNInz6obpgDQGcFmaJgB'
@@ -89,6 +90,10 @@ def main() -> None:
 
     client = anthropic.Anthropic(api_key=anthropic_key)
     quotes = generate_quotes(client)
+
+    with open(QUOTES_JSON, 'w') as f:
+        json.dump(quotes, f, indent=2, ensure_ascii=False)
+    print(f'  Saved quotes.json')
 
     print('Converting to audio with ElevenLabs...')
     for i, quote in enumerate(quotes, start=1):
