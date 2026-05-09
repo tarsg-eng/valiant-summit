@@ -34,8 +34,8 @@ export default function App() {
   // Still loading session
   if (session === undefined) return <View style={styles.root} />;
 
-  // Not signed in
-  if (!session) return <AuthScreen />;
+  // Not signed in (skip auth gate in local dev)
+  if (!session && !__DEV__) return <AuthScreen />;
 
   return (
     <View style={styles.root}>
