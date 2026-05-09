@@ -70,6 +70,17 @@ class AudioPlayer {
     await this.playByIndex(Math.floor(Math.random() * this.sounds.length));
   }
 
+  async playUrl(url: string, onDone?: () => void): Promise<void> {
+    const { sound } = await Audio.Sound.createAsync({ uri: url }, { shouldPlay: true });
+    sound.setOnPlaybackStatusUpdate(async (status) => {
+      if (status.isLoaded && status.didJustFinish) {
+        sound.setOnPlaybackStatusUpdate(null);
+        await sound.unloadAsync();
+        onDone?.();
+      }
+    });
+  }
+
   async unload(): Promise<void> {
     await Promise.all(this.sounds.map((s) => s.unloadAsync()));
     this.sounds = [];
