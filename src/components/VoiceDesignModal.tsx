@@ -82,7 +82,7 @@ export default function VoiceDesignModal({ visible, onClose, onSaved }: Props) {
       // Write base64 to a temp file
       const path = FileSystem.cacheDirectory + `vs_preview_${idx}.mp3`;
       await FileSystem.writeAsStringAsync(path, preview.audioBase64, {
-        encoding: FileSystem.EncodingType.Base64,
+        encoding: 'base64',
       });
 
       const { sound } = await Audio.Sound.createAsync(
