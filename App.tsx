@@ -21,7 +21,17 @@ export default function App() {
   const [session, setSession] = useState<Session | null | undefined>(undefined);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session: s } }) => setSession(s));
+    supabase.auth.getSession().then(async ({ data: { session: s } }) => {
+      if (!s && __DEV__) {
+        const { data } = await supabase.auth.signInWithPassword({
+          email: 'dev@valiantsummit.local',
+          password: 'devmode1234',
+        });
+        setSession(data.session);
+      } else {
+        setSession(s);
+      }
+    });
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, s) => setSession(s));
     return () => subscription.unsubscribe();
   }, []);
