@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, Modal,
   StyleSheet, ActivityIndicator, ScrollView, Alert, Platform,
 } from 'react-native';
 import * as FileSystem from 'expo-file-system';
+import { Audio, InterruptionModeIOS, InterruptionModeAndroid } from 'expo-av';
 import { supabase } from '../supabase';
-import AudioPlayer from '../AudioPlayer';
 
 const ORANGE = '#FF6B00';
 const BG = '#0d0d0d';
@@ -30,6 +30,7 @@ export default function VoiceDesignModal({ visible, onClose, onSaved }: Props) {
   const [playingIdx, setPlayingIdx] = useState<number | null>(null);
   const [voiceName, setVoiceName] = useState('');
   const [saving, setSaving] = useState(false);
+  const currentSound = useRef<Audio.Sound | null>(null);
 
   const reset = () => {
     setDescription('');
@@ -62,12 +63,47 @@ export default function VoiceDesignModal({ visible, onClose, onSaved }: Props) {
     const preview = previews[idx];
     setPlayingIdx(idx);
 
-    // Write base64 to temp file and play
-    const path = `${FileSystem.cacheDirectory}preview_${idx}.mp3`;
-    await FileSystem.writeAsStringAsync(path, preview.audioBase64, {
-      encoding: FileSystem.EncodingType.Base64,
-    });
-    await AudioPlayer.playUrl(path, () => setPlayingIdx(null));
+    try {
+      // Stop any previous preview sound
+      if (currentSound.current) {
+        await currentSound.current.unloadAsync();
+        currentSound.current = null;
+      }
+
+      // Configure audio session
+      await Audio.setAudioModeAsync({
+        playsInSilentModeIOS: true,
+        staysActiveInBackground: false,
+        interruptionModeIOS: InterruptionModeIOS.MixWithOthers,
+        interruptionModeAndroid: InterruptionModeAndroid.DoNotMix,
+        shouldDuckAndroid: false,
+      });
+
+      // Write base64 to a temp file
+      const path = FileSystem.cacheDirectory + `vs_preview_${idx}.mp3`;
+      await FileSystem.writeAsStringAsync(path, preview.audioBase64, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
+
+      const { sound } = await Audio.Sound.createAsync(
+        { uri: path },
+        { shouldPlay: true, progressUpdateIntervalMillis: 500 }
+      );
+      currentSound.current = sound;
+
+      sound.setOnPlaybackStatusUpdate((status) => {
+        if (!status.isLoaded) return;
+        if (status.didJustFinish) {
+          sound.setOnPlaybackStatusUpdate(null);
+          sound.unloadAsync();
+          currentSound.current = null;
+          setPlayingIdx(null);
+        }
+      });
+    } catch (e: unknown) {
+      Alert.alert('Playback error', String(e));
+      setPlayingIdx(null);
+    }
   };
 
   const handleSave = async () => {
