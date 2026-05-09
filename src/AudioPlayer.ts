@@ -22,6 +22,11 @@ const AUDIO_SOURCES = [
   require('../assets/audio/quote_19.mp3'),
   require('../assets/audio/quote_20.mp3'),
   require('../assets/audio/quote_21.mp3'),
+  require('../assets/audio/quote_22.mp3'),
+  require('../assets/audio/quote_23.mp3'),
+  require('../assets/audio/quote_24.mp3'),
+  require('../assets/audio/quote_25.mp3'),
+  require('../assets/audio/quote_26.mp3'),
 ];
 
 const ACTIVE_MODE = {
