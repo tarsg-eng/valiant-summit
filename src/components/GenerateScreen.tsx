@@ -16,10 +16,10 @@ const BORDER = '#222222';
 
 const PRESET_VOICES = [
   { id: 'SOYHLrjzK2X1ezoPC6cr', name: 'Harry',   desc: 'Fierce Warrior' },
-  { id: 'IKne3meq5aSn9XLyUdCD', name: 'Charlie',  desc: 'Deep & Energetic' },
-  { id: 'nPczCjzI2devNBz1zQrb', name: 'Brian',    desc: 'Deep & Resonant' },
-  { id: 'onwK4e9ZLuTAKqWW03F9', name: 'Daniel',   desc: 'Broadcaster' },
-  { id: 'pNInz6obpgDQGcFmaJgB', name: 'Adam',     desc: 'Dominant & Firm' },
+  { id: 'JBFqnCBsd6RMkjVDRZzb', name: 'George',  desc: 'Captivating' },
+  { id: 'nPczCjzI2devNBz1zQrb', name: 'Brian',   desc: 'Deep & Resonant' },
+  { id: 'onwK4e9ZLuTAKqWW03F9', name: 'Daniel',  desc: 'Broadcaster' },
+  { id: 'N2lVS1w4EtoT3dr4eOWO', name: 'Callum',  desc: 'Husky & Intense' },
 ];
 
 type Voice = { id: string; name: string; desc: string };

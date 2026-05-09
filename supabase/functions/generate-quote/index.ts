@@ -77,8 +77,8 @@ Max 2 sentences, max 40 words. No intro text, just the quote itself.`,
         headers: { 'xi-api-key': ELEVENLABS_API_KEY, 'Content-Type': 'application/json' },
         body: JSON.stringify({
           text: quoteText,
-          model_id: 'eleven_monolingual_v1',
-          voice_settings: { stability: 0.3, similarity_boost: 0.8, style: 0.6, use_speaker_boost: true },
+          model_id: 'eleven_multilingual_v2',
+          voice_settings: { stability: 0.2, similarity_boost: 0.6, style: 0.35, use_speaker_boost: true },
         }),
       }
     )

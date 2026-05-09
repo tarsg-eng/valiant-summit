@@ -18,9 +18,9 @@ import anthropic
 AUDIO_DIR = os.path.join(os.path.dirname(__file__), '..', 'assets', 'audio')
 QUOTES_JSON = os.path.join(os.path.dirname(__file__), '..', 'assets', 'quotes.json')
 
-# ElevenLabs "Adam" — deep, authoritative male voice
-ELEVENLABS_VOICE_ID = 'pNInz6obpgDQGcFmaJgB'
-ELEVENLABS_MODEL = 'eleven_monolingual_v1'
+# ElevenLabs "Harry" — Fierce Warrior, eleven_multilingual_v2
+ELEVENLABS_VOICE_ID = 'SOYHLrjzK2X1ezoPC6cr'
+ELEVENLABS_MODEL = 'eleven_multilingual_v2'
 
 QUOTE_PROMPT = """Generate exactly 20 short, aggressive, locker-room-style motivational quotes for a runner.
 
@@ -62,9 +62,9 @@ def text_to_speech(quote: str, index: int, api_key: str) -> None:
         'text': quote,
         'model_id': ELEVENLABS_MODEL,
         'voice_settings': {
-            'stability': 0.3,
-            'similarity_boost': 0.8,
-            'style': 0.6,
+            'stability': 0.2,
+            'similarity_boost': 0.6,
+            'style': 0.35,
             'use_speaker_boost': True,
         },
     }
