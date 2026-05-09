@@ -3,7 +3,7 @@ import {
   View, Text, TextInput, TouchableOpacity, Modal,
   StyleSheet, ActivityIndicator, ScrollView, Alert, Platform,
 } from 'react-native';
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 import { Audio, InterruptionModeIOS, InterruptionModeAndroid } from 'expo-av';
 import { supabase } from '../supabase';
 
